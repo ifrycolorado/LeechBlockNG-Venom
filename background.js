@@ -695,7 +695,8 @@ async function createRegExps() {
  
 			 // Apply block if all relevant block conditions are fulfilled
 			 if (!override && doBlock && (!isRepeat || activeBlock || blockRE.source.includes("venom-blacklist"))) {
-
+				console.log("✅ Applying block (ignoring isRepeat for wildcard sites):", pageURL);
+			
     			blockURL = browser.runtime.getURL("blocked.html");
  
 				 function applyBlock(keyword) {
@@ -769,24 +770,17 @@ async function createRegExps() {
 				 }
  
 				 if (keywordRE && !isInternalPage) {
-					 // Check for keyword(s) before blocking
-					 let message = {
-						 type: "keyword",
-						 keywordRE: keywordRE
-					 };
-					 browser.tabs.sendMessage(id, message).then(
-						 function (keyword) {
-							 if ((!allowKeywords && typeof keyword == "string")
-									 || (allowKeywords && keyword == null)) {
-								 applyBlock(keyword);
-							 }
-						 },
-						 function (error) {}
-					 );
-				 } else {
-					 applyBlock();
-					 return true; // blocked
-				 }
+					let matchedKeyword = url.match(keywordRE);
+					
+					if (matchedKeyword) {
+						console.log("✅ Extracted keyword from URL:", matchedKeyword[0]);
+						applyBlock(matchedKeyword[0]);
+					} else {
+						console.log("🚀 No keyword match in URL, defaulting to wildcard block.");
+						applyBlock("WILDCARD");
+					}
+				}
+				
 			 }
  
 			 // Clear filter if no longer blocked
